@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .container {
+        @apply mx-5 flex flex-col items-center rounded-[20px] border border-dull-border p-3 px-12 pb-12 md:w-[578px];
+    }
+
+    .button {
+        @apply mt-[40px] h-[56px] w-[256px] rounded-[6px] bg-black font-medium text-white md:w-[456px];
+    }
+}

@@ -6,7 +6,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        sans: ["var(--font-inter)", ...fontFamily.sans],
+      },
+      colors: {
+        dull: {
+          border: "#C1C1C1",
+          text: "#848484",
+          dark: "#333333",
+          light: "#ACACAC",
+        },
       },
     },
   },
