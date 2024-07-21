@@ -1,112 +1,65 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { api } from "~/trpc/react";
 
 export const SelectCategories = () => {
   const [page, setPage] = useState(1);
-  const categories = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20",
-    "21",
-    "22",
-    "23",
-    "24",
-    "25",
-    "26",
-    "27",
-    "28",
-    "29",
-    "30",
-    "31",
-    "32",
-    "33",
-    "34",
-    "35",
-    "36",
-    "37",
-    "38",
-    "39",
-    "40",
-    "41",
-    "42",
-    "43",
-    "44",
-    "45",
-    "46",
-    "47",
-    "48",
-    "49",
-    "50",
-    "51",
-    "52",
-    "53",
-    "54",
-    "55",
-    "56",
-    "57",
-    "58",
-    "59",
-    "60",
-    "61",
-    "62",
-    "63",
-    "64",
-    "65",
-    "66",
-    "67",
-    "68",
-    "69",
-    "70",
-    "71",
-    "72",
-    "73",
-    "74",
-    "75",
-    "76",
-    "77",
-    "78",
-    "79",
-    "80",
-    "81",
-    "82",
-    "83",
-    "84",
-    "85",
-    "86",
-    "87",
-    "88",
-    "89",
-    "90",
-    "91",
-    "92",
-    "93",
-    "94",
-    "95",
-    "96",
-    "97",
-    "98",
-    "99",
-    "100",
-  ];
-  const [userIntrests, setUserIntrests] = useState<string[]>([]);
+  const selectedCategories = api.user.getSelectedCategories.useQuery();
+  const categories = api.category.getAllCategories.useQuery();
+  const [loadingIds, setLoadingIds] = useState<number[]>([]);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log(selectedCategories.data);
+    console.log({ loadingIds });
+    if (
+      selectedCategories.isError &&
+      selectedCategories.error.data?.code === "UNAUTHORIZED"
+    ) {
+      router.replace("/login");
+    }
+  }, [selectedCategories]);
+
+  const selectCategory = api.user.selectCategory.useMutation({
+    onSettled: (data) => {
+      if (data?.updatedId) markNotLoading(data.updatedId);
+      selectedCategories.refetch();
+    },
+  });
+  const deSelectCategory = api.user.deSelectCategory.useMutation({
+    onSettled: (data) => {
+      if (data?.affectedIds[0]) markNotLoading(data.affectedIds[0]);
+      selectedCategories.refetch();
+    },
+  });
+
+  const markLoading = (id: number) => {
+    if (!loadingIds.includes(id)) setLoadingIds([...loadingIds, id]);
+  };
+
+  const markNotLoading = (id: number) => {
+    if (loadingIds.includes(id)) {
+      const ids = [...loadingIds];
+      const index = ids.indexOf(id);
+      if (index >= 0) ids.splice(index, 1);
+      setLoadingIds(ids);
+    }
+  };
+
+  const addUserSelection = (id: number) => {
+    markLoading(id);
+    selectCategory.mutate(id);
+  };
+  const removeUserSelection = (id: number) => {
+    markLoading(id);
+    deSelectCategory.mutate(id);
+  };
+
+  if (categories.isPending) return;
+
   return (
     <div className="container">
       <h1 className="my-[15px] text-center text-[24px] font-semibold md:text-[32px]">
@@ -120,23 +73,19 @@ export const SelectCategories = () => {
           My saved interests!
         </div>
         <ul className="h-[291px]">
-          {categories
-            .slice((page - 1) * 6, (page - 1) * 6 + 6)
+          {categories.data
+            ?.slice((page - 1) * 6, (page - 1) * 6 + 6)
             .map((item, index) => {
               return (
-                <div
-                  key={item + index}
-                  className="inter mb-[20px] flex capitalize"
-                >
+                <div key={item.id} className="inter mb-[20px] flex capitalize">
                   <div className="mr-[10px] flex text-[16px]">
-                    {userIntrests.includes(item) ? (
+                    {selectedCategories.data?.selectedCategories
+                      .map((e) => e.categoryId)
+                      .includes(item.id) ? (
                       <svg
                         className="cursor-pointer"
                         onClick={() => {
-                          const index = userIntrests.indexOf(item);
-                          if (index >= 0)
-                            //@ts-ignore
-                            setUserIntrests(userIntrests.toSpliced(index, 1));
+                          removeUserSelection(item.id);
                         }}
                         width="24"
                         height="24"
@@ -157,7 +106,7 @@ export const SelectCategories = () => {
                       <svg
                         className="cursor-pointer"
                         onClick={() => {
-                          setUserIntrests([...userIntrests, item]);
+                          addUserSelection(item.id);
                         }}
                         width="24"
                         height="24"
@@ -169,7 +118,10 @@ export const SelectCategories = () => {
                       </svg>
                     )}
                   </div>
-                  <span className="capitalize">{item}</span>
+                  <span className="capitalize">
+                    {item.name +
+                      (loadingIds.includes(item.id) ? " Updating..." : "")}
+                  </span>
                 </div>
               );
             })}
@@ -177,7 +129,7 @@ export const SelectCategories = () => {
         <Pagination
           page={page}
           setPage={setPage}
-          totalPages={Math.floor(categories.length / 6)}
+          totalPages={Math.floor((categories.data?.length ?? 0) / 6)}
           neighborCount={3}
         />
       </div>

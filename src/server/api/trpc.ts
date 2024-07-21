@@ -6,11 +6,15 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { decrypt } from "~/lib/session";
 
 import { db } from "~/server/db";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { SESSION_KEY } from "~/lib/constants";
 
 /**
  * 1. CONTEXT
@@ -81,3 +85,52 @@ export const createTRPCRouter = t.router;
  * are logged in.
  */
 export const publicProcedure = t.procedure;
+
+const isAuthed = t.middleware(async ({ ctx, next }) => {
+  const keyValuePairs = ctx.headers.get("cookie")?.split(";");
+
+  let sessionToken = null;
+
+  keyValuePairs?.forEach((pair) => {
+    const [key, value] = pair.split("=");
+    if (key?.trim() === SESSION_KEY) {
+      sessionToken = value?.trim();
+    }
+  });
+
+  if (!sessionToken) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "No sessionToken available",
+    });
+  }
+  const session = await decrypt(sessionToken);
+  console.log({ session });
+
+  if (!session?.userId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Invalid Session Token",
+    });
+  }
+
+  const user = await ctx.db.query.users.findFirst({
+    where: eq(users.id, Number(session.userId)),
+  });
+
+  if (!user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "User not authorized",
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      user,
+    },
+  });
+});
+
+export const privateProcedure = publicProcedure.use(isAuthed);

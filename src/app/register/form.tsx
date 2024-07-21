@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "./input";
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Input } from "~/components/input";
+import { api } from "~/trpc/react";
 
 export const RegistrationForm = () => {
   const [name, setName] = useState("");
@@ -13,11 +14,21 @@ export const RegistrationForm = () => {
 
   const router = useRouter();
 
+  const signupCall = api.user.register.useMutation({
+    onSuccess: (res) => {
+      console.log({ res });
+      router.push("/verify?" + new URLSearchParams({ email }).toString());
+    },
+    onError: (error) => {
+      console.log({ error });
+    },
+  });
+
   return (
     <form
       onSubmit={(e: any) => {
         e.preventDefault();
-        router.push("/verify");
+        signupCall.mutate({ name, email, password });
       }}
       className="container"
     >
@@ -30,6 +41,7 @@ export const RegistrationForm = () => {
         placeholder="Enter"
         label="name"
         value={name}
+        error={signupCall.error?.data?.zodError?.fieldErrors?.name?.join("\n")}
       />
       <Input
         onChange={setEmail}
@@ -37,6 +49,7 @@ export const RegistrationForm = () => {
         placeholder="Enter"
         label="email"
         value={email}
+        error={signupCall.error?.data?.zodError?.fieldErrors?.email?.join("\n")}
       />
       <Input
         onChange={setPassword}
@@ -44,8 +57,17 @@ export const RegistrationForm = () => {
         placeholder="Enter"
         label="password"
         value={password}
+        error={signupCall.error?.data?.zodError?.fieldErrors?.password?.join(
+          "\n",
+        )}
       />
-      <button className="button">CREATE AN ACCOUNT</button>
+
+      <span className="text-sm text-red-400">
+        {!signupCall.error?.data?.zodError && signupCall.error?.message}
+      </span>
+      <button className="button">
+        {signupCall.isPending ? "SUBMITTING..." : "CREATE AN ACCOUNT"}
+      </button>
 
       <div className="mt-10">
         <span className="text-dull-dark">Have an Account?</span>

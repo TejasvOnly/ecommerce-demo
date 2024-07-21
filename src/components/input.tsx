@@ -6,6 +6,7 @@ interface InputProps {
   inputType: string;
   onChange: Dispatch<SetStateAction<string>>;
   value: string;
+  error?: string;
 }
 
 export const Input: FC<InputProps> = ({
@@ -14,10 +15,11 @@ export const Input: FC<InputProps> = ({
   inputType,
   onChange,
   value,
+  error,
 }) => {
   return (
-    <div className="mb-[32px] flex h-[78px] flex-col capitalize md:w-[456px]">
-      <label className="mb-[7px] text-[16px]" htmlFor={label}>
+    <div className="mb-[32px] flex flex-col md:w-[456px]">
+      <label className="mb-[7px] text-[16px] capitalize" htmlFor={label}>
         {label}
       </label>
       <input
@@ -31,6 +33,11 @@ export const Input: FC<InputProps> = ({
         placeholder={placeholder}
         value={value}
       />
+      {error ? (
+        <span className="mt-2 text-sm font-medium text-red-400"> {error}</span>
+      ) : (
+        <></>
+      )}
     </div>
   );
 };

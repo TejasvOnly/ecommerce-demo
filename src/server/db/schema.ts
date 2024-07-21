@@ -1,13 +1,18 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   index,
   pgTableCreator,
   serial,
   timestamp,
   varchar,
+  boolean,
+  integer,
+  primaryKey,
+  PgColumn,
+  PgTableWithColumns,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -32,5 +37,81 @@ export const posts = createTable(
   },
   (example) => ({
     nameIndex: index("name_idx").on(example.name),
+  }),
+);
+
+export const users = createTable("user", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  email: varchar("email", { length: 256 }).unique().notNull(),
+  passwordHash: varchar("hash", { length: 256 }).notNull(),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+    () => new Date(),
+  ),
+});
+
+export const otps = createTable("otp", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  value: varchar("value", { length: 8 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  expiredAt: timestamp("expired_at", { withTimezone: true }),
+});
+
+export const categories = createTable("category", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
+    () => new Date(),
+  ),
+});
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  otp: one(otps, {
+    fields: [users.id],
+    references: [otps.userId],
+  }),
+  usersToCategories: many(usersToCategories),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  usersToCategories: many(usersToCategories),
+}));
+
+export const usersToCategories = createTable(
+  "users_to_groups",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    categoryId: integer("category_id")
+      .notNull()
+      .references(() => categories.id),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.categoryId] }),
+  }),
+);
+
+export const usersToCategoriesRelations = relations(
+  usersToCategories,
+  ({ one }) => ({
+    category: one(categories, {
+      fields: [usersToCategories.categoryId],
+      references: [categories.id],
+    }),
+    user: one(users, {
+      fields: [usersToCategories.userId],
+      references: [users.id],
+    }),
   }),
 );

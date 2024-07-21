@@ -1,12 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import OTPInput from "react-otp-input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api } from "~/trpc/react";
 
 export default function Verify() {
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState("39022421");
+  const [email, setEmail] = useState("");
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) setEmail(emailParam);
+    else router.push(`/`);
+  }, [searchParams]);
+
+  const verificationCall = api.user.verify.useMutation({
+    onSuccess: (res) => {
+      console.log({ res });
+      router.push(`/login`);
+    },
+    onError: (e) => {
+      console.log({ e });
+    },
+  });
 
   return (
     <div className="container">
@@ -15,12 +35,17 @@ export default function Verify() {
       </h1>
       <div className="flex flex-col items-center">
         <span> Enter the 8 digit code you have received on</span>
-        <span className="font-medium">swa***@gmail.com</span>
+        <span className="font-medium">
+          {email
+            .split("@")
+            .map((x, i) => (i === 0 ? x.slice(0, 3) + "****" : x))
+            .join("@")}
+        </span>
       </div>
       <form
         onSubmit={(e: any) => {
           e.preventDefault();
-          router.push("/interest");
+          verificationCall.mutate({ otp, email });
         }}
       >
         <label className="mb-9" htmlFor="otp">
