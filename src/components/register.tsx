@@ -26,7 +26,7 @@ export const RegistrationForm = () => {
 
   return (
     <form
-      onSubmit={(e: any) => {
+      onSubmit={(e) => {
         e.preventDefault();
         signupCall.mutate({ name, email, password });
       }}

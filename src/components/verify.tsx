@@ -43,7 +43,7 @@ export default function Verify() {
         </span>
       </div>
       <form
-        onSubmit={(e: any) => {
+        onSubmit={(e) => {
           e.preventDefault();
           verificationCall.mutate({ otp, email });
         }}

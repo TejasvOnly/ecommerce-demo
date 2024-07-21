@@ -72,7 +72,7 @@ export const LoginForm = () => {
         {loginCall.isPending ? "SUBMITTING..." : "LOGIN"}
       </button>
       <div className="mt-10">
-        <span className="text-dull-dark">Don't have an Account?</span>
+        <span className="text-dull-dark">{"Don't have an Account?"}</span>
         <Link
           className="ml-2 font-medium capitalize tracking-widest"
           href="/register"

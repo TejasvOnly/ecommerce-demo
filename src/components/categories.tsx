@@ -22,15 +22,15 @@ export const SelectCategories = () => {
   }, [selectedCategories]);
 
   const selectCategory = api.user.selectCategory.useMutation({
-    onSettled: (data) => {
+    onSettled: async (data) => {
+      await selectedCategories.refetch();
       if (data?.updatedId) markNotLoading(data.updatedId);
-      selectedCategories.refetch();
     },
   });
   const deSelectCategory = api.user.deSelectCategory.useMutation({
-    onSettled: (data) => {
+    onSettled: async (data) => {
+      await selectedCategories.refetch();
       if (data?.affectedIds[0]) markNotLoading(data.affectedIds[0]);
-      selectedCategories.refetch();
     },
   });
 
@@ -173,7 +173,7 @@ const Pagination: React.FC<{
       </button>
 
       <div className={"flex gap-3"}>
-        {new Array(neighborCount * 2 + 1).fill(-1).map((item, idx) => {
+        {new Array(neighborCount * 2 + 1).fill(-1).map((_, idx) => {
           const pageNumber = getPageNumber(idx);
           if (0 < pageNumber && pageNumber <= totalPages)
             return (

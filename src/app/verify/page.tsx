@@ -1,5 +1,7 @@
-import Verify from "~/components/verify";
+import dynamic from "next/dynamic";
 
-export default function VerifyEmailPage() {
-  return <Verify />;
-}
+const VerifyEmailPage = dynamic(() => import("~/components/verify"), {
+  ssr: false,
+});
+
+export default VerifyEmailPage;

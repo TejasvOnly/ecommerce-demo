@@ -1,15 +1,31 @@
 # Ecommerce Demo
 
-## Todo
+## Requirements
 
-- [x] Setup Database
-- [x] Scaffold basic UI with mock data
-- [x] Attach database to UI
-- [x] Add Authentication
-- [x] Error Handling
-- [ ] Deploy
+Uses Node.js and with corepack enabled
 
-### Bonus
+```bash
+corepack enable
+```
 
-- [ ] Add features to header
-- [ ] Improve parts of UI
+## Install Dependencies
+
+```bash
+yarn
+```
+
+## Run Development Server
+
+```bash
+yarn dev
+```
+
+Open http://localhost:3000 with your browser to see the result.
+
+## Build Project
+
+```bash
+yarn build
+```
+
+Outputs to `./dist/`
