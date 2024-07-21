@@ -3,8 +3,13 @@
 ## Todo
 
 - [x] Setup Database
-- [ ] Scaffold basic UI with mock data
-- [ ] Attach database to UI
-- [ ] Add Authentication
-- [ ] Error Handling
+- [x] Scaffold basic UI with mock data
+- [x] Attach database to UI
+- [x] Add Authentication
+- [x] Error Handling
 - [ ] Deploy
+
+### Bonus
+
+- [ ] Add features to header
+- [ ] Improve parts of UI

@@ -13,8 +13,6 @@ export const SelectCategories = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log(selectedCategories.data);
-    console.log({ loadingIds });
     if (
       selectedCategories.isError &&
       selectedCategories.error.data?.code === "UNAUTHORIZED"
@@ -58,7 +56,7 @@ export const SelectCategories = () => {
     deSelectCategory.mutate(id);
   };
 
-  if (categories.isPending) return;
+  if (categories.isPending || selectedCategories.isPending) return;
 
   return (
     <div className="container">
@@ -69,15 +67,15 @@ export const SelectCategories = () => {
         We will keep you notified.
       </h1>
       <div className="item-start w-full md:w-[456px]">
-        <div className="inter mb-[17px] text-[20px] font-medium">
+        <div className="mb-[17px] text-[20px] font-medium">
           My saved interests!
         </div>
         <ul className="h-[291px]">
           {categories.data
             ?.slice((page - 1) * 6, (page - 1) * 6 + 6)
-            .map((item, index) => {
+            .map((item) => {
               return (
-                <div key={item.id} className="inter mb-[20px] flex capitalize">
+                <div key={item.id} className="mb-[20px] flex capitalize">
                   <div className="mr-[10px] flex text-[16px]">
                     {selectedCategories.data?.selectedCategories
                       .map((e) => e.categoryId)
@@ -129,7 +127,7 @@ export const SelectCategories = () => {
         <Pagination
           page={page}
           setPage={setPage}
-          totalPages={Math.floor((categories.data?.length ?? 0) / 6)}
+          totalPages={Math.ceil((categories.data?.length ?? 1) / 6)}
           neighborCount={3}
         />
       </div>
@@ -143,12 +141,6 @@ const Pagination: React.FC<{
   totalPages: number;
   neighborCount: number;
 }> = ({ page, setPage, totalPages, neighborCount }) => {
-  useEffect(() => {
-    console.log({ page, totalPages, neighborCount });
-    console.log(
-      new Array(2 * neighborCount + 1).fill(0).map((_, i) => getPageNumber(i)),
-    );
-  }, [page]);
   let beforeNeighborCount = neighborCount;
 
   if (page <= neighborCount) beforeNeighborCount = page - 1;
