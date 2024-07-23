@@ -1,6 +1,8 @@
 # Ecommerce Demo
 
-## Requirements
+## Build Instructions
+
+### Requirements
 
 Uses Node.js and with corepack enabled
 
@@ -8,13 +10,13 @@ Uses Node.js and with corepack enabled
 corepack enable
 ```
 
-## Install Dependencies
+### Install Dependencies
 
 ```bash
 yarn
 ```
 
-## Run Development Server
+### Run Development Server
 
 ```bash
 yarn dev
@@ -22,10 +24,10 @@ yarn dev
 
 Open http://localhost:3000 with your browser to see the result.
 
-## Build Project
+### Build Project
 
 ```bash
 yarn build
 ```
 
-Outputs to `./dist/`
+## Tech Stack Used

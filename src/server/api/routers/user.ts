@@ -158,8 +158,9 @@ export const userRouter = createTRPCRouter({
 
   getSelectedCategories: privateProcedure.query(async ({ ctx }) => {
     const userWithCategories = await ctx.db.query.users.findFirst({
+      where: eq(users.id, ctx.user.id),
       with: {
-        usersToCategories: true,
+        categories: true,
       },
     });
     if (!userWithCategories) {
@@ -168,8 +169,7 @@ export const userRouter = createTRPCRouter({
         message: "Couldn't find user",
       });
     }
-    console.log({ userWithCategories });
-    return { selectedCategories: userWithCategories.usersToCategories };
+    return { selectedCategories: userWithCategories?.categories ?? [] };
   }),
 
   selectCategory: privateProcedure

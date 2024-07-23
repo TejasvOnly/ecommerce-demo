@@ -6,9 +6,20 @@ import { api } from "~/trpc/react";
 
 export const SelectCategories = () => {
   const [page, setPage] = useState(1);
-  const selectedCategories = api.user.getSelectedCategories.useQuery();
-  const categories = api.category.getAllCategories.useQuery();
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
+  const selectedCategories = api.user.getSelectedCategories.useQuery(
+    undefined,
+    {
+      retry: (_count, err) => {
+        // `onError` only runs once React Query stops retrying
+        if (err.data?.code === "UNAUTHORIZED") {
+          return false;
+        }
+        return true;
+      },
+    },
+  );
+  const categories = api.category.getAllCategories.useQuery();
 
   const router = useRouter();
 
@@ -19,41 +30,44 @@ export const SelectCategories = () => {
     ) {
       router.replace("/login");
     }
+    console.log({ data: categories.data });
   }, [selectedCategories]);
 
+  const markIdLoading = (id: number) => {
+    setLoadingIds((ids) => {
+      if (ids.includes(id)) return ids;
+      return [...ids, id];
+    });
+  };
+  const markIdNotLoading = (id?: number) => {
+    if (id)
+      setLoadingIds((ids) => {
+        const index = ids.indexOf(id);
+        if (index >= 0) ids.splice(index, 1);
+        return ids;
+      });
+  };
   const selectCategory = api.user.selectCategory.useMutation({
     onSettled: async (data) => {
       await selectedCategories.refetch();
-      if (data?.updatedId) markNotLoading(data.updatedId);
+      markIdNotLoading(data?.updatedId);
     },
   });
+
   const deSelectCategory = api.user.deSelectCategory.useMutation({
     onSettled: async (data) => {
       await selectedCategories.refetch();
-      if (data?.affectedIds[0]) markNotLoading(data.affectedIds[0]);
+      markIdNotLoading(data?.affectedIds[0]);
     },
   });
 
-  const markLoading = (id: number) => {
-    if (!loadingIds.includes(id)) setLoadingIds([...loadingIds, id]);
-  };
-
-  const markNotLoading = (id: number) => {
-    if (loadingIds.includes(id)) {
-      const ids = [...loadingIds];
-      const index = ids.indexOf(id);
-      if (index >= 0) ids.splice(index, 1);
-      setLoadingIds(ids);
-    }
-  };
-
   const addUserSelection = (id: number) => {
-    markLoading(id);
     selectCategory.mutate(id);
+    markIdLoading(id);
   };
   const removeUserSelection = (id: number) => {
-    markLoading(id);
     deSelectCategory.mutate(id);
+    markIdLoading(id);
   };
 
   if (categories.isPending || selectedCategories.isPending) return;
@@ -74,17 +88,21 @@ export const SelectCategories = () => {
           {categories.data
             ?.slice((page - 1) * 6, (page - 1) * 6 + 6)
             .map((item) => {
+              const isMarked = selectedCategories.data?.selectedCategories
+                .map((e) => e.categoryId)
+                .includes(item.id);
               return (
-                <div key={item.id} className="mb-[20px] flex capitalize">
+                <div
+                  key={item.id}
+                  className="flex cursor-pointer py-2 capitalize hover:bg-gray-100"
+                  onClick={() => {
+                    if (isMarked) removeUserSelection(item.id);
+                    else addUserSelection(item.id);
+                  }}
+                >
                   <div className="mr-[10px] flex text-[16px]">
-                    {selectedCategories.data?.selectedCategories
-                      .map((e) => e.categoryId)
-                      .includes(item.id) ? (
+                    {isMarked ? (
                       <svg
-                        className="cursor-pointer"
-                        onClick={() => {
-                          removeUserSelection(item.id);
-                        }}
                         width="24"
                         height="24"
                         viewBox="0 0 24 24"
@@ -102,10 +120,6 @@ export const SelectCategories = () => {
                       </svg>
                     ) : (
                       <svg
-                        className="cursor-pointer"
-                        onClick={() => {
-                          addUserSelection(item.id);
-                        }}
                         width="24"
                         height="24"
                         viewBox="0 0 24 24"
@@ -118,7 +132,7 @@ export const SelectCategories = () => {
                   </div>
                   <span className="capitalize">
                     {item.name +
-                      (loadingIds.includes(item.id) ? " Updating..." : "")}
+                      (loadingIds.includes(item.id) ? " [Updating]" : "")}
                   </span>
                 </div>
               );

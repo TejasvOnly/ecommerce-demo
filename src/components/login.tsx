@@ -22,6 +22,8 @@ export const LoginForm = () => {
         sameSite: "strict",
       });
       router.push("/");
+      setEmail("");
+      setPassword("");
     },
     onError: (e) => {
       console.log({ e });
